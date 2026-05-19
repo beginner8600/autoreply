@@ -1,0 +1,112 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TriggerType {
+  ANY_COMMENT
+  KEYWORD_MATCH
+}
+
+enum DeliveryStatus {
+  QUEUED
+  SENT
+  FAILED
+  SKIPPED
+  SIMULATED
+}
+
+model User {
+  id                String             @id @default(cuid())
+  email             String             @unique
+  passwordHash      String
+  name              String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  instagramAccounts InstagramAccount[]
+  automations       Automation[]
+}
+
+model InstagramAccount {
+  id                String            @id @default(cuid())
+  userId            String
+  igUserId          String
+  pageId            String?
+  username          String
+  pageName          String?
+  accessToken       String
+  tokenExpiresAt    DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  automations       Automation[]
+  commentEvents     CommentEvent[]
+
+  @@unique([userId, igUserId])
+}
+
+model Automation {
+  id                  String            @id @default(cuid())
+  userId              String
+  instagramAccountId  String
+  name                String
+  mediaId             String
+  mediaCaption        String?
+  mediaPermalink      String?
+  triggerType         TriggerType
+  keywords            String[]
+  dmTemplate          String
+  publicReplyTemplate String?
+  isActive            Boolean           @default(true)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  instagramAccount    InstagramAccount  @relation(fields: [instagramAccountId], references: [id], onDelete: Cascade)
+  user                User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deliveries          MessageDelivery[]
+
+  @@index([instagramAccountId, mediaId, isActive])
+}
+
+model WebhookEvent {
+  id         String   @id @default(cuid())
+  object     String
+  payload    Json
+  receivedAt DateTime @default(now())
+}
+
+model CommentEvent {
+  id                 String             @id @default(cuid())
+  instagramAccountId String?
+  entryId            String?
+  mediaId            String
+  commentId          String             @unique
+  commentText        String
+  actorId            String?
+  actorUsername      String?
+  raw                Json
+  receivedAt         DateTime           @default(now())
+  instagramAccount   InstagramAccount?  @relation(fields: [instagramAccountId], references: [id], onDelete: SetNull)
+  deliveries         MessageDelivery[]
+
+  @@index([entryId, mediaId])
+}
+
+model MessageDelivery {
+  id             String         @id @default(cuid())
+  automationId   String
+  commentEventId String
+  status         DeliveryStatus @default(QUEUED)
+  messageText    String
+  externalId     String?
+  errorMessage   String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  automation     Automation     @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  commentEvent   CommentEvent   @relation(fields: [commentEventId], references: [id], onDelete: Cascade)
+
+  @@index([automationId, status])
+}

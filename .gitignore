@@ -1,0 +1,30 @@
+node_modules
+.env
+.env.*
+!.env.example
+.DS_Store
+.turbo
+dist
+coverage
+*.log
+
+# Next.js
+.next
+out
+
+# Prisma / local db artifacts
+apps/api/prisma/dev.db*
+
+# Build output
+apps/api/dist
+
+# Debug / temp
+_tmp_*
+*.pid
+pg_hba.conf
+postgres_data/
+redis_data/
+
+# IDE
+.vscode/
+.idea/
