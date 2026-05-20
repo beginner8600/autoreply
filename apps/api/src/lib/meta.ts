@@ -172,7 +172,8 @@ export const lastExchangeAttempts: { errors: string[]; lastSource?: "instagram" 
 };
 
 export async function exchangeCodeForAccessToken(code: string): Promise<ExchangedToken> {
-  if (!env.META_APP_ID || !env.META_APP_SECRET) {
+  const hasFacebookCreds = env.META_APP_ID && env.META_APP_SECRET;
+  if (!hasInstagramAppCreds() && !hasFacebookCreds) {
     throw new Error("Meta app credentials are not configured");
   }
 
