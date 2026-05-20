@@ -1,0 +1,11 @@
+# Netlify build config for the apps/web Next.js app (pnpm monorepo).
+[build]
+  base = "apps/web"
+  command = "pnpm build"
+
+[build.environment]
+  NODE_VERSION = "20"
+  PNPM_VERSION = "10.33.0"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
