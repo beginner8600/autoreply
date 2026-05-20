@@ -149,9 +149,12 @@ export async function instagramRoutes(app: FastifyInstance) {
       return reply.redirect(`${env.FRONTEND_URL}/dashboard?connected=1&mode=mock`);
     }
 
-    if (!env.META_APP_ID || !env.META_APP_SECRET) {
+    const hasInstagramCreds = env.META_INSTAGRAM_APP_ID && env.META_INSTAGRAM_APP_SECRET;
+    const hasFacebookCreds = env.META_APP_ID && env.META_APP_SECRET;
+
+    if (!hasInstagramCreds && !hasFacebookCreds) {
       return reply.redirect(
-        `${env.FRONTEND_URL}/dashboard?connect_error=${encodeURIComponent("META_APP_ID and META_APP_SECRET are required for live Instagram connect.")}`,
+        `${env.FRONTEND_URL}/dashboard?connect_error=${encodeURIComponent("Meta app credentials are required for live Instagram connect. Set META_INSTAGRAM_APP_ID and META_INSTAGRAM_APP_SECRET.")}`,
       );
     }
 
