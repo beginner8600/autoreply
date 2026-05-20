@@ -1,7 +1,9 @@
 # Netlify build config for the apps/web Next.js app (pnpm monorepo).
+# publish is relative to base, so ".next" => apps/web/.next
 [build]
   base = "apps/web"
   command = "pnpm build"
+  publish = ".next"
 
 [build.environment]
   NODE_VERSION = "20"
