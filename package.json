@@ -6,7 +6,6 @@
     "dev": "pnpm --parallel --filter web --filter api dev",
     "dev:web": "pnpm --filter web dev",
     "dev:api": "pnpm --filter api dev",
-    "dev:worker": "pnpm --filter api worker",
     "build": "pnpm -r --filter ./apps/* build",
     "typecheck": "pnpm -r --filter ./apps/* typecheck",
     "db:generate": "pnpm --filter api prisma:generate",

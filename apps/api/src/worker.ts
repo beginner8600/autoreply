@@ -16,9 +16,10 @@ function matchesAutomation(triggerType: TriggerType, keywords: string[], comment
   return keywords.some((keyword) => normalizedComment.includes(keyword));
 }
 
-const worker = new Worker(
-  "comment-events",
-  async (job) => {
+export function startCommentWorker() {
+  const worker = new Worker(
+    "comment-events",
+    async (job) => {
     const payload = job.data as {
       commentEventId: string;
     };
@@ -143,13 +144,16 @@ const worker = new Worker(
   },
 );
 
-worker.on("ready", () => {
-  console.log("comment worker ready");
-});
-
-worker.on("failed", (job, error) => {
-  console.error("comment worker failed", {
-    jobId: job?.id,
-    error: error.message,
+  worker.on("ready", () => {
+    console.log("comment worker ready");
   });
-});
+
+  worker.on("failed", (job, error) => {
+    console.error("comment worker failed", {
+      jobId: job?.id,
+      error: error.message,
+    });
+  });
+
+  return worker;
+}

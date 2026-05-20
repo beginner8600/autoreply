@@ -2,7 +2,7 @@ services:
   - type: web
     name: autoreply-api
     runtime: node
-    plan: starter
+    plan: free
     rootDir: .
     buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter api build
     startCommand: pnpm --filter api start
@@ -35,57 +35,3 @@ services:
         sync: false
       - key: META_INSTAGRAM_APP_SECRET
         sync: false
-
-  - type: worker
-    name: autoreply-worker
-    runtime: node
-    plan: starter
-    rootDir: .
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter api build
-    startCommand: pnpm --filter api start:worker
-    autoDeploy: true
-    envVars:
-      - key: NODE_VERSION
-        value: "20"
-      - key: PNPM_VERSION
-        value: "10.33.0"
-      - key: DATABASE_URL
-        fromService:
-          type: web
-          name: autoreply-api
-          envVarKey: DATABASE_URL
-      - key: REDIS_URL
-        fromService:
-          type: web
-          name: autoreply-api
-          envVarKey: REDIS_URL
-      - key: JWT_SECRET
-        fromService:
-          type: web
-          name: autoreply-api
-          envVarKey: JWT_SECRET
-      - key: WEBHOOK_VERIFY_TOKEN
-        fromService:
-          type: web
-          name: autoreply-api
-          envVarKey: WEBHOOK_VERIFY_TOKEN
-      - key: META_INSTAGRAM_APP_ID
-        fromService:
-          type: web
-          name: autoreply-api
-          envVarKey: META_INSTAGRAM_APP_ID
-      - key: META_INSTAGRAM_APP_SECRET
-        fromService:
-          type: web
-          name: autoreply-api
-          envVarKey: META_INSTAGRAM_APP_SECRET
-      - key: FRONTEND_URL
-        value: https://autoreply.nareshbasude.in
-      - key: META_REDIRECT_URI
-        value: https://api.autoreply.nareshbasude.in/instagram/oauth/callback
-      - key: META_GRAPH_VERSION
-        value: v23.0
-      - key: META_OAUTH_SCOPES
-        value: instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments
-      - key: MOCK_INSTAGRAM_CONNECT
-        value: "false"
