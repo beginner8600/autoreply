@@ -49,27 +49,33 @@ services:
         value: "20"
       - key: PNPM_VERSION
         value: "10.33.0"
-      - fromService:
+      - key: DATABASE_URL
+        fromService:
           type: web
           name: autoreply-api
           envVarKey: DATABASE_URL
-      - fromService:
+      - key: REDIS_URL
+        fromService:
           type: web
           name: autoreply-api
           envVarKey: REDIS_URL
-      - fromService:
+      - key: JWT_SECRET
+        fromService:
           type: web
           name: autoreply-api
           envVarKey: JWT_SECRET
-      - fromService:
+      - key: WEBHOOK_VERIFY_TOKEN
+        fromService:
           type: web
           name: autoreply-api
           envVarKey: WEBHOOK_VERIFY_TOKEN
-      - fromService:
+      - key: META_INSTAGRAM_APP_ID
+        fromService:
           type: web
           name: autoreply-api
           envVarKey: META_INSTAGRAM_APP_ID
-      - fromService:
+      - key: META_INSTAGRAM_APP_SECRET
+        fromService:
           type: web
           name: autoreply-api
           envVarKey: META_INSTAGRAM_APP_SECRET
