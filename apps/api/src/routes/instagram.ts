@@ -420,13 +420,30 @@ export async function instagramRoutes(app: FastifyInstance) {
         out.profileError = e instanceof Error ? e.message : "unknown";
       }
 
+      let firstMediaId: string | undefined;
       try {
         const mediaResp = await fetch(
           `https://graph.instagram.com/v23.0/me/media?fields=id,media_type,permalink,timestamp&limit=5&access_token=${encodeURIComponent(account.accessToken)}`,
         );
-        out.recentMedia = await mediaResp.json();
+        const media = (await mediaResp.json()) as {
+          data?: Array<{ id?: string }>;
+        };
+        out.recentMedia = media;
+        firstMediaId = media.data?.[0]?.id;
       } catch (e) {
         out.recentMediaError = e instanceof Error ? e.message : "unknown";
+      }
+
+      // Exercises instagram_business_manage_comments (reads comments on a media).
+      if (firstMediaId) {
+        try {
+          const commentsResp = await fetch(
+            `https://graph.instagram.com/v23.0/${firstMediaId}/comments?fields=id,text,username,timestamp&access_token=${encodeURIComponent(account.accessToken)}`,
+          );
+          out.comments = await commentsResp.json();
+        } catch (e) {
+          out.commentsError = e instanceof Error ? e.message : "unknown";
+        }
       }
 
       return out;
