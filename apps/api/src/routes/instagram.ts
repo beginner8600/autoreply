@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 
+import type { Prisma } from "@prisma/client";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 
@@ -16,6 +17,7 @@ import {
   resolveInstagramAccount,
   subscribeInstagramAccountToWebhooks,
 } from "../lib/meta.js";
+import { processCommentEvent } from "../worker.js";
 
 const lastInstagramDebugByUserId = new Map<
   string,
@@ -341,45 +343,36 @@ export async function instagramRoutes(app: FastifyInstance) {
         body.commentText ??
         (automation.keywords[0] ? `i want the ${automation.keywords[0]} please` : "hello");
 
-      const simulatedPayload = {
-        object: "instagram",
-        entry: [
-          {
-            id: automation.instagramAccount.igUserId,
-            time: Math.floor(Date.now() / 1000),
-            changes: [
-              {
-                field: "comments",
-                value: {
-                  id: `sim_${crypto.randomUUID()}`,
-                  from: {
-                    id: "sim_actor",
-                    username: body.actorUsername ?? "sim_user",
-                  },
-                  text: commentText,
-                  media: {
-                    id: automation.mediaId,
-                    media_product_type: "FEED",
-                  },
-                },
-              },
-            ],
-          },
-        ],
-      };
+      const actorUsername = body.actorUsername ?? "sim_user";
+      const commentId = `sim_${crypto.randomUUID()}`;
 
-      const upstream = await fetch(`http://localhost:${env.PORT}/webhooks/meta`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(simulatedPayload),
+      // Create the comment event and process it inline (no queue) so the
+      // test works regardless of the background worker / Redis state.
+      const commentEvent = await prisma.commentEvent.create({
+        data: {
+          instagramAccountId: automation.instagramAccountId,
+          entryId: automation.instagramAccount.igUserId,
+          mediaId: automation.mediaId,
+          commentId,
+          commentText,
+          actorId: "sim_actor",
+          actorUsername,
+          raw: { simulated: true } as Prisma.InputJsonValue,
+        },
+      });
+
+      await processCommentEvent(commentEvent.id);
+
+      const deliveries = await prisma.messageDelivery.findMany({
+        where: { commentEventId: commentEvent.id },
+        select: { status: true, messageText: true, errorMessage: true },
       });
 
       return reply.send({
-        injectedTo: "/webhooks/meta",
-        upstreamStatus: upstream.status,
-        simulatedPayload,
-        nextStep:
-          "Wait ~1s, then check MessageDelivery: docker exec -i autoig-postgres psql -U postgres -d autoig -c \"SELECT \\\"createdAt\\\", status, \\\"messageText\\\", \\\"errorMessage\\\" FROM \\\"MessageDelivery\\\" ORDER BY \\\"createdAt\\\" DESC LIMIT 3;\"",
+        ok: true,
+        commentEventId: commentEvent.id,
+        commentText,
+        deliveries,
       });
     },
   );

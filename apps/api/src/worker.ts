@@ -16,133 +16,136 @@ function matchesAutomation(triggerType: TriggerType, keywords: string[], comment
   return keywords.some((keyword) => normalizedComment.includes(keyword));
 }
 
-export function startCommentWorker() {
-  const worker = new Worker(
-    "comment-events",
-    async (job) => {
-    const payload = job.data as {
-      commentEventId: string;
-    };
+/**
+ * Processes a single stored comment event: finds matching automations and
+ * sends the configured replies. Safe to call directly (inline) or from the
+ * BullMQ worker.
+ */
+export async function processCommentEvent(commentEventId: string): Promise<void> {
+  const commentEvent = await prisma.commentEvent.findUnique({
+    where: { id: commentEventId },
+    include: {
+      instagramAccount: true,
+    },
+  });
 
-    const commentEvent = await prisma.commentEvent.findUnique({
-      where: { id: payload.commentEventId },
-      include: {
-        instagramAccount: true,
+  if (!commentEvent) {
+    return;
+  }
+
+  const account = commentEvent.instagramAccount
+    ? commentEvent.instagramAccount
+    : commentEvent.entryId
+      ? await prisma.instagramAccount.findFirst({
+          where: {
+            OR: [{ igUserId: commentEvent.entryId }, { pageId: commentEvent.entryId }],
+          },
+        })
+      : null;
+
+  if (!account) {
+    return;
+  }
+
+  const automations = await prisma.automation.findMany({
+    where: {
+      instagramAccountId: account.id,
+      mediaId: commentEvent.mediaId,
+      isActive: true,
+    },
+    orderBy: { createdAt: "asc" },
+  });
+
+  for (const automation of automations) {
+    if (!matchesAutomation(automation.triggerType, automation.keywords, commentEvent.commentText)) {
+      continue;
+    }
+
+    const messageText = renderTemplate(automation.dmTemplate, {
+      first_name: commentEvent.actorUsername?.split(/[.\s_]/)[0],
+      username: commentEvent.actorUsername ?? undefined,
+      comment: commentEvent.commentText,
+    });
+
+    const delivery = await prisma.messageDelivery.create({
+      data: {
+        automationId: automation.id,
+        commentEventId: commentEvent.id,
+        status: DeliveryStatus.QUEUED,
+        messageText,
       },
     });
 
-    if (!commentEvent) {
-      return;
-    }
+    const isSimulated =
+      commentEvent.commentId.startsWith("sim_") ||
+      env.MOCK_INSTAGRAM_CONNECT ||
+      account.accessToken === "mock-access-token";
 
-    const account = commentEvent.instagramAccount
-      ? commentEvent.instagramAccount
-      : commentEvent.entryId
-        ? await prisma.instagramAccount.findFirst({
-            where: {
-              OR: [
-                { igUserId: commentEvent.entryId },
-                { pageId: commentEvent.entryId },
-              ],
-            },
-          })
-        : null;
+    try {
+      if (isSimulated) {
+        await prisma.messageDelivery.update({
+          where: { id: delivery.id },
+          data: {
+            status: DeliveryStatus.SIMULATED,
+            externalId: `simulated:${delivery.id}`,
+          },
+        });
+      } else {
+        const response = await sendCommentPrivateReply({
+          igUserId: account.igUserId,
+          accessToken: account.accessToken,
+          commentId: commentEvent.commentId,
+          text: messageText,
+        });
 
-    if (!account) {
-      return;
-    }
-
-    const automations = await prisma.automation.findMany({
-      where: {
-        instagramAccountId: account.id,
-        mediaId: commentEvent.mediaId,
-        isActive: true,
-      },
-      orderBy: { createdAt: "asc" },
-    });
-
-    for (const automation of automations) {
-      if (!matchesAutomation(automation.triggerType, automation.keywords, commentEvent.commentText)) {
-        continue;
+        await prisma.messageDelivery.update({
+          where: { id: delivery.id },
+          data: {
+            status: DeliveryStatus.SENT,
+            externalId: response.message_id,
+          },
+        });
       }
 
-      const messageText = renderTemplate(automation.dmTemplate, {
-        first_name: commentEvent.actorUsername?.split(/[.\s_]/)[0],
-        username: commentEvent.actorUsername ?? undefined,
-        comment: commentEvent.commentText,
-      });
-
-      const delivery = await prisma.messageDelivery.create({
-        data: {
-          automationId: automation.id,
-          commentEventId: commentEvent.id,
-          status: DeliveryStatus.QUEUED,
-          messageText,
-        },
-      });
-
-      const isSimulated =
-        commentEvent.commentId.startsWith("sim_") ||
-        env.MOCK_INSTAGRAM_CONNECT ||
-        account.accessToken === "mock-access-token";
-
-      try {
+      if (automation.publicReplyTemplate) {
         if (isSimulated) {
           await prisma.messageDelivery.update({
             where: { id: delivery.id },
             data: {
-              status: DeliveryStatus.SIMULATED,
-              externalId: `simulated:${delivery.id}`,
+              errorMessage: "Public reply simulated",
             },
           });
         } else {
-          const response = await sendCommentPrivateReply({
-            igUserId: account.igUserId,
-            accessToken: account.accessToken,
+          await replyToComment({
             commentId: commentEvent.commentId,
-            text: messageText,
-          });
-
-          await prisma.messageDelivery.update({
-            where: { id: delivery.id },
-            data: {
-              status: DeliveryStatus.SENT,
-              externalId: response.message_id,
-            },
+            accessToken: account.accessToken,
+            message: automation.publicReplyTemplate,
           });
         }
-
-        if (automation.publicReplyTemplate) {
-          if (isSimulated) {
-            await prisma.messageDelivery.update({
-              where: { id: delivery.id },
-              data: {
-                errorMessage: "Public reply simulated",
-              },
-            });
-          } else {
-            await replyToComment({
-              commentId: commentEvent.commentId,
-              accessToken: account.accessToken,
-              message: automation.publicReplyTemplate,
-            });
-          }
-        }
-      } catch (error) {
-        await prisma.messageDelivery.update({
-          where: { id: delivery.id },
-          data: {
-            status: DeliveryStatus.FAILED,
-            errorMessage: error instanceof Error ? error.message : "Unknown delivery error",
-          },
-        });
       }
+    } catch (error) {
+      await prisma.messageDelivery.update({
+        where: { id: delivery.id },
+        data: {
+          status: DeliveryStatus.FAILED,
+          errorMessage: error instanceof Error ? error.message : "Unknown delivery error",
+        },
+      });
     }
-  },
-  {
-    connection: redis,
-  },
-);
+  }
+}
+
+export function startCommentWorker() {
+  const worker = new Worker(
+    "comment-events",
+    async (job) => {
+      const payload = job.data as { commentEventId: string };
+      await processCommentEvent(payload.commentEventId);
+    },
+    {
+      connection: redis,
+    },
+  );
 
   worker.on("ready", () => {
     console.log("comment worker ready");
