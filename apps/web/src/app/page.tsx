@@ -7,14 +7,15 @@ export default function Home() {
         <div className="grid gap-0 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="bg-[radial-gradient(circle_at_top_left,_rgba(251,146,60,0.5),_transparent_35%),linear-gradient(135deg,#1c1917,#44403c)] px-8 py-12 text-white lg:px-12 lg:py-16">
             <p className="text-sm font-semibold uppercase tracking-[0.25em] text-orange-200">
-              AutoIG
+              AutoReply
             </p>
             <h1 className="mt-6 max-w-2xl text-5xl font-semibold tracking-tight">
-              Instagram comment automation built around the actual money step.
+              Turn Instagram comments into DM conversations, automatically.
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-8 text-stone-200">
-              Capture a comment, match it to a trigger, queue the job, and send
-              the private reply. That is the product. The rest is packaging.
+              Connect your Instagram Business account, choose a post, and set a
+              trigger. When someone comments, AutoReply sends them a private
+              message instantly — so you never miss a lead.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
@@ -22,13 +23,13 @@ export default function Home() {
                 className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-stone-950 transition hover:bg-orange-100"
                 href="/register"
               >
-                Start building
+                Get started
               </Link>
               <Link
                 className="rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
-                href="/dashboard"
+                href="/login"
               >
-                Open dashboard
+                Sign in
               </Link>
             </div>
           </div>
@@ -37,20 +38,20 @@ export default function Home() {
             <div className="grid gap-4 sm:grid-cols-2">
               {[
                 {
-                  title: "Auth",
-                  body: "Email/password onboarding for the first operator account.",
-                },
-                {
                   title: "Connect",
-                  body: "Mock-first Instagram connection flow with live OAuth entry points.",
+                  body: "Link your Instagram Business or Creator account in a few clicks.",
                 },
                 {
-                  title: "Automate",
-                  body: "Post-specific triggers for any comment or keyword match.",
+                  title: "Choose a post",
+                  body: "Pick which of your posts should respond to comments.",
                 },
                 {
-                  title: "Deliver",
-                  body: "Webhook intake plus BullMQ worker for private-reply DM jobs.",
+                  title: "Set a trigger",
+                  body: "Reply to every comment, or only those with specific keywords.",
+                },
+                {
+                  title: "Auto-reply",
+                  body: "Each matching comment gets an instant, personalized direct message.",
                 },
               ].map((item) => (
                 <article
@@ -69,14 +70,24 @@ export default function Home() {
 
             <div className="mt-8 rounded-[2rem] border border-orange-200 bg-[#fff7ed] p-6">
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-orange-700">
-                Critical blocker
+                Why it matters
               </p>
               <p className="mt-3 text-base leading-7 text-stone-700">
-                Submit Meta Business Verification and App Review on May 19, 2026,
-                not after the dashboard looks pretty. This repo lets you develop
-                against mock mode while approvals are pending.
+                A comment is a moment of interest. AutoReply responds while that
+                interest is still warm — moving the conversation into DMs where
+                it can actually convert.
               </p>
             </div>
+
+            <p className="mt-6 text-xs text-stone-500">
+              <Link href="/privacy" className="hover:text-orange-700">
+                Privacy Policy
+              </Link>
+              {" · "}
+              <Link href="/terms" className="hover:text-orange-700">
+                Terms of Service
+              </Link>
+            </p>
           </div>
         </div>
       </section>

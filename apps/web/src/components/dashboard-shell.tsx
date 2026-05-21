@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -98,7 +97,7 @@ export function DashboardShell() {
     if (searchParams.get("connected") === "1") {
       const mode = searchParams.get("mode");
       return mode === "mock"
-        ? "Instagram mock account connected. Switch MOCK_INSTAGRAM_CONNECT off when your Meta app is approved."
+        ? "Demo Instagram account connected."
         : "Instagram account connected.";
     }
 
@@ -247,6 +246,31 @@ export function DashboardShell() {
     }
   }
 
+  async function runTestComment(automationId: string) {
+    if (!token) {
+      return;
+    }
+
+    setError(null);
+    setSuccess(null);
+
+    try {
+      await apiRequest(`/instagram/debug/simulate-comment`, {
+        method: "POST",
+        token,
+        body: JSON.stringify({ automationId }),
+      });
+      await refreshData(token);
+      setSuccess(
+        "Test comment sent. The automation processed it and the reply was delivered — see the delivery status below.",
+      );
+    } catch (testError) {
+      setError(
+        testError instanceof Error ? testError.message : "Unable to run test comment",
+      );
+    }
+  }
+
   function handleConnectClick(event: React.MouseEvent<HTMLAnchorElement>) {
     if (!token) {
       event.preventDefault();
@@ -277,14 +301,14 @@ export function DashboardShell() {
       <header className="flex flex-col gap-4 rounded-[2rem] border border-stone-200 bg-white/80 p-8 shadow-xl shadow-orange-100 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-3">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-orange-600">
-            MVP Control Room
+            AutoReply
           </p>
           <h1 className="max-w-2xl text-4xl font-semibold tracking-tight text-stone-950">
-            Build the webhook-to-DM pipeline first, then add polish.
+            Your comment-to-DM automations
           </h1>
           <p className="max-w-2xl text-base leading-7 text-stone-600">
-            This dashboard is intentionally narrow: one account, one automation
-            path, one place to verify the conversion loop works.
+            Connect an Instagram account, choose a post, and set a trigger.
+            AutoReply sends a direct message every time someone comments.
           </p>
         </div>
 
@@ -355,19 +379,12 @@ export function DashboardShell() {
                 Comment triggers
               </h2>
             </div>
-            <Link
-              className="text-sm font-medium text-orange-700 underline decoration-orange-300 underline-offset-4"
-              href="https://developers.facebook.com/docs/graph-api/webhooks"
-              target="_blank"
-            >
-              Meta webhook docs
-            </Link>
           </div>
 
           <div className="space-y-4">
             {automations.length === 0 ? (
               <div className="rounded-[1.5rem] border border-dashed border-stone-300 bg-stone-50 px-5 py-6 text-sm text-stone-600">
-                No automations yet. Connect an account, add a media ID, and send a test comment into the webhook.
+                No automations yet. Connect an Instagram account and create your first automation using the form on the right.
               </div>
             ) : (
               automations.map((automation) => (
@@ -403,13 +420,22 @@ export function DashboardShell() {
                       ) : null}
                     </div>
 
-                    <button
-                      className="rounded-full border border-rose-300 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50"
-                      onClick={() => deleteAutomation(automation.id)}
-                      type="button"
-                    >
-                      Delete
-                    </button>
+                    <div className="flex flex-shrink-0 gap-2">
+                      <button
+                        className="rounded-full bg-orange-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-700"
+                        onClick={() => runTestComment(automation.id)}
+                        type="button"
+                      >
+                        Run test comment
+                      </button>
+                      <button
+                        className="rounded-full border border-rose-300 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50"
+                        onClick={() => deleteAutomation(automation.id)}
+                        type="button"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
 
                   <div className="mt-4 flex flex-wrap gap-3 text-xs text-stone-500">

@@ -13,8 +13,9 @@ const displayFont = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "AutoIG",
-  description: "Instagram comment-to-DM automation MVP",
+  title: "AutoReply — Instagram comment-to-DM automation",
+  description:
+    "Automatically reply to Instagram comments with a direct message. Connect your account, pick a post, set a trigger.",
 };
 
 export default function RootLayout({

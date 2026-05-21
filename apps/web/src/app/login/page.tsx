@@ -8,14 +8,14 @@ export default function LoginPage() {
       <div className="grid w-full gap-10 rounded-[2.5rem] border border-stone-200 bg-white/80 p-8 shadow-2xl shadow-orange-100 lg:grid-cols-[1.1fr_0.9fr] lg:p-12">
         <section className="rounded-[2rem] bg-[radial-gradient(circle_at_top_left,_rgba(251,146,60,0.35),_transparent_40%),linear-gradient(135deg,#1c1917,#44403c)] p-8 text-white">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-orange-200">
-            AutoIG
+            AutoReply
           </p>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight">
-            Turn comment intent into DM conversations before it cools off.
+            Turn Instagram comments into DM conversations.
           </h1>
           <p className="mt-4 max-w-xl text-base leading-7 text-stone-200">
-            Start with the smallest possible loop: connect an account, pick a
-            post, capture a comment, send a private reply.
+            Connect your Instagram account, pick a post, and let AutoReply send
+            a direct message every time someone comments.
           </p>
         </section>
 
@@ -24,8 +24,7 @@ export default function LoginPage() {
             Sign in
           </h2>
           <p className="mt-3 text-base text-stone-600">
-            Use email/password for the first cut. Social login can wait until
-            you have proof the automation converts.
+            Sign in to manage your connected accounts and automations.
           </p>
           <div className="mt-8">
             <AuthForm mode="login" />

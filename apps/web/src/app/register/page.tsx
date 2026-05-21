@@ -8,11 +8,11 @@ export default function RegisterPage() {
       <div className="grid w-full gap-10 rounded-[2.5rem] border border-stone-200 bg-white/80 p-8 shadow-2xl shadow-orange-100 lg:grid-cols-[0.95fr_1.05fr] lg:p-12">
         <section className="self-center">
           <h1 className="text-3xl font-semibold tracking-tight text-stone-950">
-            Create your operator account
+            Create your account
           </h1>
           <p className="mt-3 text-base text-stone-600">
-            The goal here is speed to internal demo, not enterprise identity.
-            Keep the first auth layer simple and reversible.
+            Sign up with your email to start automating replies to your
+            Instagram comments.
           </p>
           <div className="mt-8">
             <AuthForm mode="register" />
@@ -27,13 +27,16 @@ export default function RegisterPage() {
 
         <section className="rounded-[2rem] border border-stone-200 bg-stone-950 p-8 text-white">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-orange-300">
-            Day-one checklist
+            How it works
           </p>
           <ul className="mt-6 space-y-4 text-sm leading-7 text-stone-200">
-            <li>Submit Meta Business Verification and App Review now.</li>
-            <li>Keep the MVP focused on one automation path that actually fires.</li>
-            <li>Use mock connect mode until production permissions land.</li>
-            <li>Test webhooks against a real HTTPS URL before touching pricing.</li>
+            <li>Connect your Instagram Business or Creator account.</li>
+            <li>Choose a post you want to automate.</li>
+            <li>Set a trigger — every comment, or specific keywords.</li>
+            <li>
+              Each matching comment gets an instant, personalized direct
+              message.
+            </li>
           </ul>
         </section>
       </div>
